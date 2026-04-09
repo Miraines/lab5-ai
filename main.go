@@ -28,17 +28,20 @@ func NewStore() *Store {
 const codeLen = 6
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+const maxAttempts = 1000
+
 func (s *Store) generateCode() string {
-	for {
+	for i := 0; i < maxAttempts; i++ {
 		b := make([]byte, codeLen)
-		for i := range b {
-			b[i] = charset[rand.Intn(len(charset))]
+		for j := range b {
+			b[j] = charset[rand.Intn(len(charset))]
 		}
 		code := string(b)
 		if _, exists := s.byCode[code]; !exists {
 			return code
 		}
 	}
+	panic("failed to generate unique code after max attempts")
 }
 
 // Shorten возвращает короткий код для URL. Идемпотентен.
@@ -111,7 +114,9 @@ type errorResponse struct {
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		log.Printf("failed to encode JSON response: %v", err)
+	}
 }
 
 func isValidURL(rawURL string) bool {

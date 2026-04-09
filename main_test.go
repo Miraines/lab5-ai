@@ -87,7 +87,9 @@ func TestShortenIdempotent(t *testing.T) {
 	handler.ServeHTTP(w1, req1)
 
 	var resp1 shortenResponse
-	json.NewDecoder(w1.Body).Decode(&resp1)
+	if err := json.NewDecoder(w1.Body).Decode(&resp1); err != nil {
+		t.Fatalf("failed to decode first response: %v", err)
+	}
 
 	req2 := httptest.NewRequest(http.MethodPost, "/shorten", strings.NewReader(body))
 	w2 := httptest.NewRecorder()
@@ -98,7 +100,9 @@ func TestShortenIdempotent(t *testing.T) {
 	}
 
 	var resp2 shortenResponse
-	json.NewDecoder(w2.Body).Decode(&resp2)
+	if err := json.NewDecoder(w2.Body).Decode(&resp2); err != nil {
+		t.Fatalf("failed to decode second response: %v", err)
+	}
 
 	if resp1.ShortURL != resp2.ShortURL {
 		t.Fatalf("expected same short_url, got %s and %s", resp1.ShortURL, resp2.ShortURL)
@@ -114,7 +118,9 @@ func TestRedirectExistingCode(t *testing.T) {
 	handler.ServeHTTP(w, req)
 
 	var resp shortenResponse
-	json.NewDecoder(w.Body).Decode(&resp)
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
 	code := strings.TrimPrefix(resp.ShortURL, "http://localhost:8080/")
 
 	req2 := httptest.NewRequest(http.MethodGet, "/"+code, nil)
@@ -150,7 +156,9 @@ func TestStatsAfterVisits(t *testing.T) {
 	handler.ServeHTTP(w, req)
 
 	var resp shortenResponse
-	json.NewDecoder(w.Body).Decode(&resp)
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
 	code := strings.TrimPrefix(resp.ShortURL, "http://localhost:8080/")
 
 	// Visit 3 times
@@ -169,7 +177,9 @@ func TestStatsAfterVisits(t *testing.T) {
 	}
 
 	var stats statsResponse
-	json.NewDecoder(w2.Body).Decode(&stats)
+	if err := json.NewDecoder(w2.Body).Decode(&stats); err != nil {
+		t.Fatalf("failed to decode stats response: %v", err)
+	}
 
 	if stats.URL != "https://example.com" {
 		t.Fatalf("expected url https://example.com, got %s", stats.URL)
